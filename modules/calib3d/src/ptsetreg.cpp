@@ -52,6 +52,15 @@
 namespace cv
 {
 
+/**
+ * @Method:    更新ransac的迭代次数
+ * @Returns:   int 更新后的最大迭代次数
+ * @Qualifier: 
+ * @Parameter: double p 信心分数
+ * @Parameter: double ep 错误点所占的比例
+ * @Parameter: int modelPoints 模型中点的数量
+ * @Parameter: int maxIters 当前最大迭代次数
+ */
 int RANSACUpdateNumIters( double p, double ep, int modelPoints, int maxIters )
 {
     if( modelPoints <= 0 )
