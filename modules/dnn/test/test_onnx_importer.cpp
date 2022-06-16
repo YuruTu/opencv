@@ -1752,6 +1752,8 @@ TEST_P(Test_ONNX_layers, Quantized_Convolution)
     testONNXModels("quantized_conv_uint8_weights", npy, 0.004, 0.02);
     testONNXModels("quantized_conv_int8_weights", npy, 0.03, 0.5);
     testONNXModels("quantized_conv_per_channel_weights", npy, 0.06, 0.4);
+
+    testONNXModels("quantized_conv_asymmetric_pads_int8_weights");
 }
 
 TEST_P(Test_ONNX_layers, Quantized_MatMul)
@@ -1851,6 +1853,11 @@ TEST_P(Test_ONNX_layers, Quantized_Concat)
 TEST_P(Test_ONNX_layers, Quantized_Constant)
 {
     testONNXModels("quantized_constant", npy, 0.002, 0.008);
+}
+
+TEST_P(Test_ONNX_layers, OutputRegistration)
+{
+    testONNXModels("output_registration", npy, 0, 0, false, true, 2);
 }
 
 INSTANTIATE_TEST_CASE_P(/*nothing*/, Test_ONNX_layers, dnnBackendsAndTargets());
