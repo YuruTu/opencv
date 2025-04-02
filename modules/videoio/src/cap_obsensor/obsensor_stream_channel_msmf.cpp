@@ -25,6 +25,7 @@
 #include "obsensor_stream_channel_msmf.hpp"
 
 #include <shlwapi.h> // QISearch
+#include <Mferror.h>
 
 #pragma warning(disable : 4503)
 #pragma comment(lib, "mfplat")
@@ -33,6 +34,7 @@
 #pragma comment(lib, "Strmiids")
 #pragma comment(lib, "Mfreadwrite")
 #pragma comment(lib, "dxgi")
+#pragma comment(lib, "Shlwapi")
 
 namespace cv {
 namespace obsensor {
@@ -97,7 +99,7 @@ bool parseUvcDeviceSymbolicLink(const std::string& symbolicLink, uint16_t& vid, 
     std::string lowerStr = symbolicLink;
     for (size_t i = 0; i < lowerStr.length(); i++)
     {
-        lowerStr[i] = (char)tolower(lowerStr[i]); 
+        lowerStr[i] = (char)tolower(lowerStr[i]);
     }
     auto tokens = stringSplit(lowerStr, '#');
     if (tokens.size() < 1 || (tokens[0] != R"(\\?\usb)" && tokens[0] != R"(\\?\hid)"))
@@ -194,7 +196,7 @@ std::vector<UvcDeviceInfo> MFContext::queryUvcDeviceInfoList()
         std::string uid, guid;
         if (!parseUvcDeviceSymbolicLink(symbolicLink, vid, pid, mi, uid, guid))
             continue;
-        uvcDevList.emplace_back(UvcDeviceInfo({ symbolicLink, name, uid, vid, pid, mi }));
+        uvcDevList.emplace_back(UvcDeviceInfo{ symbolicLink, name, uid, vid, pid, mi });
         CV_LOG_INFO(NULL, "UVC device found: name=" << name << ", vid=" << vid << ", pid=" << pid << ", mi=" << mi << ", uid=" << uid << ", guid=" << guid);
     }
     return uvcDevList;
@@ -316,8 +318,12 @@ void MSMFStreamChannel::start(const StreamProfile& profile, FrameCallback frameC
     {
         for (uint32_t k = 0;; k++)
         {
-            HR_FAILED_EXEC(streamReader_->GetNativeMediaType(index, k, &mediaType), { continue; })
-                GUID subtype;
+            auto hr = streamReader_->GetNativeMediaType(index, k, &mediaType);
+            if(hr == MF_E_INVALIDSTREAMNUMBER || hr == MF_E_NO_MORE_TYPES){
+                break;
+            }
+            HR_FAILED_EXEC(hr, { continue; })
+            GUID subtype;
             HR_FAILED_RETURN(mediaType->GetGUID(MF_MT_SUBTYPE, &subtype));
             HR_FAILED_RETURN(MFGetAttributeSize(mediaType.Get(), MF_MT_FRAME_SIZE, &width, &height));
             HR_FAILED_RETURN(MFGetAttributeRatio(mediaType.Get(), MF_MT_FRAME_RATE_RANGE_MIN, &frameRateMin.numerator, &frameRateMin.denominator));
@@ -468,13 +474,13 @@ STDMETHODIMP MSMFStreamChannel::OnReadSample(HRESULT hrStatus, DWORD dwStreamInd
         if (sample)
         {
             ComPtr<IMFMediaBuffer> buffer = nullptr;
-            DWORD max_length, current_length;
+            DWORD maxLength, currentLength;
             byte* byte_buffer = nullptr;
 
             HR_FAILED_EXEC(sample->GetBufferByIndex(0, &buffer), { return S_OK; });
 
-            buffer->Lock(&byte_buffer, &max_length, &current_length);
-            Frame fo = { currentProfile_.format, currentProfile_.width, currentProfile_.height, current_length, (uint8_t*)byte_buffer };
+            buffer->Lock(&byte_buffer, &maxLength, &currentLength);
+            Frame fo = { currentProfile_.format, currentProfile_.width, currentProfile_.height, currentLength, (uint8_t*)byte_buffer };
             if (depthFrameProcessor_)
             {
                 depthFrameProcessor_->process(&fo);
@@ -493,7 +499,7 @@ STDMETHODIMP MSMFStreamChannel::OnEvent(DWORD /*sidx*/, IMFMediaEvent* /*event*/
 
 STDMETHODIMP MSMFStreamChannel::OnFlush(DWORD)
 {
-    if (streamState_ == STREAM_STARTING)
+    if (streamState_ != STREAM_STOPED)
     {
         std::unique_lock<std::mutex> lock(streamStateMutex_);
         streamState_ = STREAM_STOPED;

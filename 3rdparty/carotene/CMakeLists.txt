@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.11 FATAL_ERROR)
+cmake_minimum_required(VERSION ${MIN_VER_CMAKE} FATAL_ERROR)
 
 project(Carotene)
 
@@ -27,6 +27,10 @@ if(CMAKE_COMPILER_IS_GNUCC)
     endif()
 endif()
 
+if(APPLE AND CV_CLANG AND WITH_NEON)
+    ocv_warnings_disable(CMAKE_CXX_FLAGS -Wno-unused-function)
+endif()
+
 add_library(carotene_objs OBJECT EXCLUDE_FROM_ALL
   ${carotene_headers}
   ${carotene_sources}
@@ -39,6 +43,10 @@ endif()
 if(WITH_NEON)
     target_compile_definitions(carotene_objs PRIVATE "-DWITH_NEON")
 endif()
+
+ if(MINGW)
+    target_compile_definitions(carotene_objs PRIVATE "-D_USE_MATH_DEFINES=1")
+ endif()
 
 # we add dummy file to fix XCode build
 add_library(carotene STATIC ${OPENCV_3RDPARTY_EXCLUDE_FROM_ALL} "$<TARGET_OBJECTS:carotene_objs>" "${CAROTENE_SOURCE_DIR}/dummy.cpp")

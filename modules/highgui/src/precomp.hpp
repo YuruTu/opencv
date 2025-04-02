@@ -54,13 +54,12 @@
 #include "opencv2/core/utility.hpp"
 #if defined(__OPENCV_BUILD)
 #include "opencv2/core/private.hpp"
+#include "opencv2/core/utils/configuration.private.hpp"
 #endif
 
 #include "opencv2/imgproc.hpp"
 #include "opencv2/imgproc/imgproc_c.h"
 #include "opencv2/highgui/highgui_c.h"
-
-#include "opencv2/imgcodecs.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -100,6 +99,7 @@ void cvSetModeWindow_WinRT(const char* name, double prop_value);
 CvRect cvGetWindowRect_W32(const char* name);
 CvRect cvGetWindowRect_GTK(const char* name);
 CvRect cvGetWindowRect_COCOA(const char* name);
+CvRect cvGetWindowRect_WAYLAND(const char* name);
 
 double cvGetModeWindow_W32(const char* name);
 double cvGetModeWindow_GTK(const char* name);
@@ -116,6 +116,7 @@ double cvGetOpenGlProp_W32(const char* name);
 double cvGetOpenGlProp_GTK(const char* name);
 
 double cvGetPropVisible_W32(const char* name);
+double cvGetPropVisible_COCOA(const char* name);
 
 double cvGetPropTopmost_W32(const char* name);
 double cvGetPropTopmost_COCOA(const char* name);

@@ -25,6 +25,8 @@
 
 #include "obsensor_uvc_stream_channel.hpp"
 
+#include <condition_variable>
+
 #include <windows.h>
 #include <guiddef.h>
 #include <mfapi.h>
@@ -40,7 +42,7 @@
 #include <mutex>
 #include <vidcap.h> //IKsTopologyInfo
 #include <ksproxy.h> //IKsControl
-#include <ksmedia.h> 
+#include <ksmedia.h>
 
 namespace cv {
 namespace obsensor {
